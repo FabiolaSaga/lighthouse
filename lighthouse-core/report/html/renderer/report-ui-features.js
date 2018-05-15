@@ -34,7 +34,7 @@ class ReportUIFeatures {
     /** @type {!Element} */
     this.lighthouseIcon; // eslint-disable-line no-unused-expressions
     /** @type {!Element} */
-    this.scoresShadowWrapper; // eslint-disable-line no-unused-expressions
+    this.scoresWrapperBg; // eslint-disable-line no-unused-expressions
     /** @type {!Element} */
     this.productInfo; // eslint-disable-line no-unused-expressions
     /** @type {!Element} */
@@ -122,7 +122,7 @@ class ReportUIFeatures {
     this.headerSticky = this._dom.find('.lh-header-sticky', this._document);
     this.headerBackground = this._dom.find('.lh-header-bg', this._document);
     this.lighthouseIcon = this._dom.find('.lh-lighthouse', this._document);
-    this.scoresShadowWrapper = this._dom.find('.lh-scores-wrapper__shadow', this._document);
+    this.scoresWrapperBg = this._dom.find('.lh-scores-wrapper__background', this._document);
     this.productInfo = this._dom.find('.lh-product-info', this._document);
     this.toolbar = this._dom.find('.lh-toolbar', this._document);
     this.toolbarMetadata = this._dom.find('.lh-toolbar__metadata', this._document);
@@ -206,45 +206,40 @@ class ReportUIFeatures {
 
   animateHeader() {
     const collapsedHeaderHeight = 50;
-    const animateScrollPercentage = Math.min(1, this.latestKnownScrollY /
-      (this.headerHeight - collapsedHeaderHeight));
-    const headerTransitionHeightDiff = this.headerHeight - collapsedHeaderHeight +
-      this.headerOverlap;
+    const heightDiff = this.headerHeight - collapsedHeaderHeight + this.headerOverlap;
+    const scrollPct = Math.min(1,
+      this.latestKnownScrollY / (this.headerHeight - collapsedHeaderHeight));
 
-    this.headerSticky.style.transform = `translateY(${headerTransitionHeightDiff *
-      animateScrollPercentage *
-      -1}px)`;
-    this.headerBackground.style.transform = `translateY(${animateScrollPercentage *
-      this.headerOverlap}px)`;
+    const scoresContainer = this.scoresWrapperBg.parentElement;
+
+    this.headerSticky.style.transform = `translateY(${heightDiff * scrollPct * -1}px)`;
+    this.headerBackground.style.transform = `translateY(${scrollPct * this.headerOverlap}px)`;
     this.lighthouseIcon.style.transform =
       `translate3d(calc(var(--report-content-width) / 2),` +
-      ` calc(-100% - ${animateScrollPercentage * this.headerOverlap * -1}px), 0) scale(${1 -
-        animateScrollPercentage})`;
-    this.lighthouseIcon.style.opacity = Math.max(0, 1 - animateScrollPercentage);
-    this.scoresShadowWrapper.style.opacity = 1 - animateScrollPercentage;
-    const scoresContainer = this.scoresShadowWrapper.parentElement;
-    scoresContainer.style.borderRadius = (1 - animateScrollPercentage) * 8 + 'px';
-    scoresContainer.style.boxShadow =
-        `0 4px 2px -2px rgba(0, 0, 0, ${animateScrollPercentage * 0.2})`;
-    const scoreScale = scoresContainer.querySelector('.lh-scorescale');
-    scoreScale.style.opacity = `${1 - animateScrollPercentage}`;
-    const scoreHeader = scoresContainer.querySelector('.lh-scores-header');
-    const delta = 32 * animateScrollPercentage;
-    scoreHeader.style.paddingBottom = `${32 - delta}px`;
-    scoresContainer.style.marginBottom = `${delta}px`;
-    this.toolbar.style.transform = `translateY(${headerTransitionHeightDiff *
-      animateScrollPercentage}px)`;
-    this.exportButton.parentElement.style.transform = `translateY(${headerTransitionHeightDiff *
-      animateScrollPercentage}px)`;
-    this.exportButton.style.transform = `scale(${1 - 0.2 * animateScrollPercentage})`;
-    // start showing the productinfo when we are at the 50% mark of our animation
-    this.productInfo.style.opacity = this.toolbarMetadata.style.opacity =
-      animateScrollPercentage < 0.5 ? 0 : (animateScrollPercentage - 0.5) * 2;
-    this.env.style.transform = `translateY(${Math.max(
-      0,
-      headerTransitionHeightDiff * animateScrollPercentage - 6
-    )}px)`;
+      ` calc(-100% - ${scrollPct * this.headerOverlap * -1}px), 0) scale(${1 - scrollPct})`;
+    this.lighthouseIcon.style.opacity = Math.max(0, 1 - scrollPct);
 
+    // Switch up the score background & shadows
+    this.scoresWrapperBg.style.opacity = 1 - scrollPct;
+    this.scoresWrapperBg.style.transform = `scaleY(${1 - scrollPct * 0.2})`;
+    const scoreShadow = scoresContainer.querySelector('.lh-scores-wrapper__shadow');
+    scoreShadow.style.opacity = scrollPct;
+    scoreShadow.style.transform = `scaleY(${1 - scrollPct * 0.2})`;
+
+    // Fade & move the scorescale
+    const scoreScalePositionDelta = 32;
+    const scoreScale = scoresContainer.querySelector('.lh-scorescale');
+    scoreScale.style.opacity = `${1 - scrollPct}`;
+    scoreScale.style.transform = `translateY(${scrollPct * -scoreScalePositionDelta}px)`;
+
+    // Move the toolbar & export
+    this.toolbar.style.transform = `translateY(${heightDiff * scrollPct}px)`;
+    this.exportButton.parentElement.style.transform = `translateY(${heightDiff * scrollPct}px)`;
+    this.exportButton.style.transform = `scale(${1 - 0.2 * scrollPct})`;
+    // Start showing the productinfo when we are at the 50% mark of our animation
+    this.productInfo.style.opacity = this.toolbarMetadata.style.opacity =
+      scrollPct < 0.5 ? 0 : (scrollPct - 0.5) * 2;
+    this.env.style.transform = `translateY(${Math.max(0, heightDiff * scrollPct - 6)}px)`;
 
     this.isAnimatingHeader = false;
   }
